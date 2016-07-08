@@ -71,7 +71,7 @@ def get_submissions_list(r, subreddit):
 
     submissions_list = []
     try:
-        # get_hot() returns a generator of submissions, so we convert it
+        # get_new() returns a generator of submissions, so we convert it
         # to a list
 
         # if the subreddit does not exist (e.g.: Go, or the 
@@ -110,13 +110,17 @@ def main_loop():
                                            {"created_utc": submission.created_utc, 
                                             "data_id": submission.id,
                                             "data" : submission.title})
-                for comment in submission.comments:
-                    if isinstance(comment, praw.objects.MoreComments):
-                        continue
-                    res = coll.insert_one(
-                                           {"created_utc": comment.created_utc, 
-                                            "data_id": comment.id,
-                                            "data" : comment.body})
+                try:
+                    for comment in submission.comments:
+                        if isinstance(comment, praw.objects.MoreComments):
+                            continue
+                        res = coll.insert_one(
+                                               {"created_utc": comment.created_utc,
+                                                "data_id": comment.id,
+                                                "data" : comment.body})
+                except praw.errors.HTTPException as e:
+                    print "praw.errors.HTTPException occurred while getting comments for " \
+                        + str(submission.title) + ": " + str(e)
         # Do not overload Reddit servers with requests
         time.sleep(3)
 
