@@ -6,6 +6,9 @@ from pymongo import MongoClient, DESCENDING, TEXT
 import pymongo
 import os.path
 from utils.constants import *
+from praw.errors import RateLimitExceeded, APIException, HTTPException
+from requests import HTTPError
+from requests.exceptions import ReadTimeout
 
 # List containing subreddits from input file
 input_data = []
@@ -23,7 +26,6 @@ collections_dict = {}
 def init(input_filename):
     # Check if input file exists
     input_path = os.path.join(INPUT_FOLDER, input_filename)
-    print str(input_path)
     if not os.path.isfile(input_path):
         print "File " + str(input_filename) + " does not exist"
         sys.exit(-1)
@@ -80,8 +82,8 @@ def get_submissions_list(r, subreddit):
         submissions_list = list(submissions)
 	last_submission_fullname[subreddit] = submissions_list[-1].fullname
         print "subreddit " + str(subreddit) + " fullname " + str(last_submission_fullname[subreddit])
-    except praw.errors.HTTPException as e:
-        print "praw.errors.HTTPException occurred while getting submissions for " \
+    except (RateLimitExceeded, APIException, HTTPError, HTTPException, ReadTimeout), e:
+        print "Exception occurred while getting submissions for " \
                 + str(subreddit) + ": " + str(e)
     return submissions_list
 
@@ -111,15 +113,19 @@ def main_loop():
                                             "data_id": submission.id,
                                             "data" : submission.title})
                 try:
-                    for comment in submission.comments:
+                    flat_comments = praw.helpers.flatten_tree(submission.comments)
+                    for comment in flat_comments:
                         if isinstance(comment, praw.objects.MoreComments):
                             continue
+                        coll.create_index([("created_utc", DESCENDING)])
+                        # Second index is for searching after timestamps and keyword
+                        coll.create_index([("data", TEXT), ("created_utc", DESCENDING)])
                         res = coll.insert_one(
                                                {"created_utc": comment.created_utc,
                                                 "data_id": comment.id,
                                                 "data" : comment.body})
-                except praw.errors.HTTPException as e:
-                    print "praw.errors.HTTPException occurred while getting comments for " \
+                except (RateLimitExceeded, APIException, HTTPError, HTTPException, ReadTimeout), e:
+                    print "Exception occurred while getting comments for " \
                         + str(submission.title) + ": " + str(e)
         # Do not overload Reddit servers with requests
         time.sleep(3)

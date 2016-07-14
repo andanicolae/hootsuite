@@ -1,5 +1,8 @@
 * Reddit daemon and web server for Hootsuite challenge *
 
+* Run mongod *
+./mongodb_start.sh
+
 * Run Reddit daemon: *
 python -m reddit_daemon.daemon
 
