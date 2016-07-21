@@ -41,7 +41,6 @@ def init(input_filename):
     # Connect to Reddit
     global r
     r = praw.Reddit(user_agent="my_reddit_script:v1.0")
-    r.login()
 
     client = MongoClient()
 
