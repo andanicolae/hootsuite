@@ -1,0 +1,23 @@
+version: '2'
+services:
+  mongodb:
+    build: mongodb
+    ports:
+     - "27017:27017"
+    container_name: "mymongodb"
+
+  daemon:
+    build: reddit_daemon
+    depends_on:
+     - mongodb
+    links:
+      - "mongodb"
+
+  web_server:
+    build: web_server
+    depends_on:
+     - mongodb
+    ports:
+     - "5000:5000"
+    links:
+      - mongodb
