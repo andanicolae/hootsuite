@@ -43,6 +43,9 @@ def init(input_filename):
     r = praw.Reddit(user_agent="my_reddit_script:v1.0")
 
     client = MongoClient('172.18.0.2', 27017)
+    if not client:
+        print "Error creating MongoClient"
+        sys.exit(-1)
 
     # Create database
     global db
