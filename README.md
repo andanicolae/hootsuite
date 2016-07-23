@@ -23,3 +23,12 @@ then the respective submission/comment is returned).
 
 * Run unittests *
 python -m unittest discover -v
+
+* Run Docker composer *
+sudo docker-compose up --build
+
+* Check that the containers are up and running *
+sudo docker ps -a
+
+* Kill all running containers *
+sudo docker rm -f $(sudo docker ps -a -q)

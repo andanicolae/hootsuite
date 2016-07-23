@@ -1,6 +1,6 @@
 import json
 from flask import Flask, jsonify, request, abort
-from flask_pymongo import PyMongo
+from pymongo import MongoClient
 from bson import json_util
 from utils.constants import *
 from utils.http_exception import InvalidUsage
@@ -11,12 +11,14 @@ if not app:
     print "Error: app failed"
     sys.exit(-1)
 
-app.config['MONGODB_HOST'] = "172.18.0.2"
-app.config['MONGODB_PORT'] = 27017
+client = MongoClient('172.18.0.2', 27017)
+if not client:
+    print "Error creating MongoClient"
+    sys.exit(-1)
 
-mongo = PyMongo(app)
-if not mongo:
-    print "Error: PyMongo failed"
+db = client[DEFAULT_DATABASE]
+if not db:
+    print "Error creating database"
     sys.exit(-1)
 
 # Code taken from flask documentation
@@ -70,13 +72,13 @@ def get_elems():
 
     # Do not show _id field in responses
     if not keyword:
-        elems = mongo.db[subreddit].find({"created_utc" : {"$gt" : t1, "$lt" : t2}}, {"_id" : 0}).sort("created_utc", -1)
+        elems = db[subreddit].find({"created_utc" : {"$gt" : t1, "$lt" : t2}}, {"_id" : 0}).sort("created_utc", -1)
     else:
-        elems = mongo.db[subreddit].find({"created_utc" : {"$gt" : t1, "$lt" : t2}, "$text" : {"$search" : keyword}}, {"_id" : 0}).sort("created_utc", -1)
+        elems = db[subreddit].find({"created_utc" : {"$gt" : t1, "$lt" : t2}, "$text" : {"$search" : keyword}}, {"_id" : 0}).sort("created_utc", -1)
 
     # Return the list of elements in json format
     elems_list = [json.dumps(elem, default = json_util.default) for elem in elems]
     return jsonify(elems_list)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=5000, debug=True)

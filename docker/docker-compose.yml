@@ -11,7 +11,8 @@ services:
     depends_on:
      - mongodb
     links:
-      - "mongodb"
+     - mongodb
+    container_name: "mydaemon"
 
   web_server:
     build: web_server
@@ -21,3 +22,4 @@ services:
      - "5000:5000"
     links:
       - mongodb
+    container_name: "mywebserver"
