@@ -1,1 +1,1 @@
-sudo mongod --smallfiles --setParameter textSearchEnabled=true
+sudo mongod --smallfiles
